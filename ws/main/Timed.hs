@@ -4,10 +4,12 @@ import Data.Char (isPunctuation, isSpace)
 import Data.Monoid (mappend)
 import Data.Text (Text)
 import Data.Time.Clock
+import Control.Applicative ((<$>))
 import Control.Exception (fromException, handle)
-import Control.Monad (forM_, forever)
+import Control.Monad (forM_, forever, replicateM)
 import Control.Monad.Writer (liftIO)
 import Control.Concurrent (MVar, newMVar, modifyMVar_, readMVar, threadDelay)
+import System.Random (randomIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Network.WebSockets as WS
@@ -42,9 +44,8 @@ application state pending = do
 tick :: WS.Connection -> MVar ServerState -> Client -> IO ()
 tick conn state client@(user, _) = handle catchDisconnect $
   forever $ do
-    time <- getCurrentTime
-    WS.sendTextData conn (T.append user (T.pack $ show time))
-    putStrLn $ "Tick..." ++ show time
+    numbers <- replicateM 100 ((`mod` 100) <$> randomIO :: IO Int)
+    WS.sendTextData conn (T.pack $ show numbers)
     threadDelay 1000000
   where
     catchDisconnect e = case fromException e of

@@ -1,0 +1,19 @@
+body {
+    padding: 0;
+}
+
+div.sessions {
+    text-align: center;
+    width: 100%;
+    position: absolute;
+    bottom: 50px;
+}
+
+.chart div {
+  font: 10px sans-serif;
+  background-color: steelblue;
+  text-align: right;
+  padding: 3px;
+  margin: 1px;
+  color: white;
+}

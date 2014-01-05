@@ -41,4 +41,5 @@ executable ws
     , mtl          >= 2.1.2
     , base         >= 4.6
     , time         >= 1.4.0.1
+    , random       >= 1.0.1.1
     , websockets   >= 0.8.0.0
