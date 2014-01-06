@@ -1,4 +1,6 @@
-function NumbersCtrl($scope) {
+var app = angular.module('numbersApp', ['dthree', 'numbersComp']);
+
+app.controller('NumbersCtrl', ['$scope', function($scope) {
   function createWebSocket(path) {
     var host = window.location.hostname;
     if (host == '') host = 'localhost';
@@ -20,5 +22,4 @@ function NumbersCtrl($scope) {
        $scope.numbers = e.data;
      });
   };
-
-}
+}]);
