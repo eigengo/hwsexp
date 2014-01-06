@@ -1,0 +1,1 @@
+A simple Haskell server WebSocket server with AngularJS application with D3 chart. Head over to (http://www.cakesolutions.net/teamblogs/2014/01/06/haskell-websockets-and-d3-js/)[http://www.cakesolutions.net/teamblogs/2014/01/06/haskell-websockets-and-d3-js/] for details.
