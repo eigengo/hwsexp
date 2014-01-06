@@ -58,11 +58,6 @@ perform state client@(query, conn) = handle catchDisconnect $
   where
     catchDisconnect :: SomeException -> IO ()
     catchDisconnect _ = liftIO $ modifyMVar_ state $ return . removeClient client
-    {--
-    catchDisconnect e = case fromException e of
-      Just WS.ConnectionClosed -> liftIO $ modifyMVar_ state $ return . removeClient client
-      _ -> return ()
-    --}
 
 -- |The main entry point for the WS application
 main :: IO ()
