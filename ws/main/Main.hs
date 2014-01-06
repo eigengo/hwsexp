@@ -42,7 +42,7 @@ application state pending = do
   query <- WS.receiveData conn
   clients <- liftIO $ readMVar state
   let client = (query, conn)
-  liftIO $ modifyMVar_ state $ return . addClient client
+  modifyMVar_ state (\s' -> return (addClient client s'))
   perform state client
 
 

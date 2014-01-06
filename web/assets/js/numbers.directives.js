@@ -1,4 +1,4 @@
-angular.module('numbersComp', [])
+angular.module('numbers.directives', [])
   .directive('tabs', function() {
     return {
       restrict: 'E',
