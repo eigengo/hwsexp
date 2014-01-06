@@ -17,7 +17,7 @@ library
   hs-source-dirs:      core/main
   default-language:    Haskell2010
   build-depends:       
-      base >=4.6
+      base >= 4.6
     , dsp  >= 0.2.2
 
 test-suite core-spec

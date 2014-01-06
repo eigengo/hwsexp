@@ -4,13 +4,12 @@
     <title>Number cruncher</title>
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <!-- jQuery -->
-    <script src="assets/js/jquery-2.0.3.min.js"></script>
-    <!-- Bootstrap -->
-    <script src="assets/js/bootstrap.min.js"></script>
+    <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
     <!-- AngularJS -->
     <script src="http://code.angularjs.org/1.2.7/angular.min.js"></script>
+    <!-- Bootstrap -->
+    <script src="assets/js/bootstrap.min.js"></script>
     <!-- D3 and AngularJS D3 support -->
-    <script src="assets/js/d3.v3.min.js"></script>
     <script src="assets/js/d3a.js"></script>
     <script src="assets/js/d3ac.js"></script>
     <!-- App code -->
@@ -29,7 +28,7 @@
         </pane>
         <pane title="Canvas">
             <h3>Visual representation</h3>
-            <div class="chart" chart="{{numbers}}"/>
+            <chart data="{{numbers}}"/>
         </pane>
     </tabs>
 </div>
