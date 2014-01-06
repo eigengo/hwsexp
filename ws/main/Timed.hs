@@ -8,7 +8,7 @@ import Control.Applicative ((<$>))
 import Control.Exception (fromException, handle)
 import Control.Monad (forM_, forever, replicateM)
 import Control.Monad.Writer (liftIO)
-import Control.Concurrent (MVar, newMVar, modifyMVar_, readMVar, threadDelay)
+import Control.Concurrent (MVar, newMVar, modifyMVar_, readMVar, threadDelay, forkIO)
 import System.Random (randomIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -38,8 +38,8 @@ application state pending = do
   query <- WS.receiveData conn
   clients <- liftIO $ readMVar state
   let client = (query, conn)
+  _ <- forkIO $ tick conn state client
   liftIO $ modifyMVar_ state $ return . addClient client
-  tick conn state client
 
 tick :: WS.Connection -> MVar ServerState -> Client -> IO ()
 tick conn state client@(user, _) = handle catchDisconnect $
