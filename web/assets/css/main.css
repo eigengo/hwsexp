@@ -1,15 +1,8 @@
 body {
-    padding: 0;
+    padding: 5pt;
 }
 
-div.sessions {
-    text-align: center;
-    width: 100%;
-    position: absolute;
-    bottom: 50px;
-}
-
-.chart div {
+.barchart2d div {
   font: 10px sans-serif;
   background-color: steelblue;
   text-align: right;

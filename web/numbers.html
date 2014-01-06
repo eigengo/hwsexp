@@ -10,11 +10,11 @@
     <!-- Bootstrap -->
     <script src="assets/js/bootstrap.min.js"></script>
     <!-- D3 and AngularJS D3 support -->
-    <script src="assets/js/d3a.js"></script>
-    <script src="assets/js/d3ac.js"></script>
+    <script src="assets/js/d3.core.js"></script>
+    <script src="assets/js/d3.directives.js"></script>
     <!-- App code -->
-    <script src="assets/js/numbersComp.js"></script>
-    <script src="assets/js/numbersApp.js"></script>
+    <script src="assets/js/numbers.app.js"></script>
+    <script src="assets/js/numbers.directives.js"></script>
     <!-- Styles -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="assets/css/main.css" rel="stylesheet"/>
@@ -28,7 +28,7 @@
         </pane>
         <pane title="Canvas">
             <h3>Visual representation</h3>
-            <chart data="{{numbers}}"/>
+            <barchart2d data="{{numbers}}"/>
         </pane>
     </tabs>
 </div>

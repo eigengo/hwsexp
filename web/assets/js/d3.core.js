@@ -1,4 +1,6 @@
+// creates the d3.core module, which contains the d3Service
 angular.module('d3.core', [])
+  // creates d3Service by injecting the D3JS JavaScript to the document
   .factory('d3Service', ['$document', '$q', '$rootScope',
     function($document, $q, $rootScope) {
       var d = $q.defer();
