@@ -1,4 +1,4 @@
-var app = angular.module('numbersApp', ['dthree', 'numbersComp']);
+var app = angular.module('numbersApp', ['d3.directives', 'numbersComp']);
 
 app.controller('NumbersCtrl', ['$scope', function($scope) {
   function createWebSocket(path) {

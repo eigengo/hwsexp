@@ -42,7 +42,7 @@ application state pending = do
   liftIO $ modifyMVar_ state $ return . addClient client
 
 tick :: WS.Connection -> MVar ServerState -> Client -> IO ()
-tick conn state client@(user, _) = handle catchDisconnect $
+tick conn state client@(query, _) = handle catchDisconnect $
   forever $ do
     numbers <- replicateM 100 ((`mod` 100) <$> randomIO :: IO Int)
     WS.sendTextData conn (T.pack $ show numbers)
