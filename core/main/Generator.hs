@@ -3,7 +3,6 @@ module Generator(generator, Generator(..), GeneratorDelay) where
 
   import System.Random
   import Control.Monad
-  import Control.Monad.State
   import Data.Attoparsec 
   import Control.Applicative ((<$>))
   import qualified Data.Attoparsec.Char8 as C
