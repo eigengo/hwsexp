@@ -10,15 +10,19 @@ angular.module('numbers.app', ['d3.directives', 'numbers.directives'])
     }
 
     $scope.numbers = {};
+    $scope.expression = "evendistr 25 [0..100] forever every 1000ms";
 
     var socket = createWebSocket('/'); 
-    // new SockJS('ws://localhost:9160', undefined, {protocols_whitelist: ['websocket']});
     socket.onopen = function() {
-       socket.send("even 0-100 every 1s");
+       //socket.send("even 0-100 every 1s");
     };
     socket.onmessage = function(e) {
        $scope.$apply(function() {
          $scope.numbers = e.data;
        });
+    };
+
+    $scope.executeExpression = function() {
+      socket.send($scope.expression);
     };
   }]);

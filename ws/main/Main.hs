@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main(main) where
+import Generator
 import Data.Text (Text)
 import Control.Applicative ((<$>))
 import Control.Exception (fromException, handle, SomeException)
@@ -42,19 +43,22 @@ application state pending = do
   query <- WS.receiveData conn
   clients <- liftIO $ readMVar state
   let client = (query, conn)
-  modifyMVar_ state $ return . addClient client
-  perform state client
+  case generator (T.unpack query) of
+    Left  msg -> WS.sendTextData conn (T.pack msg)
+    Right gen -> do { modifyMVar_ state $ return . addClient client
+                    ; perform state client gen
+                    }
 
 
 -- |Performs the query on behalf of the client, cleaning up after itself when the client disconnects
 perform :: MVar ServerState -- ^ The server state
         -> Client           -- ^ The client tuple (the query to perform and the connection for the responses)
+        -> Generator [Int]  -- ^ The value generator
         -> IO ()            -- ^ The output
-perform state client@(query, conn) = handle catchDisconnect $
+perform state client@(query, conn) gen = handle catchDisconnect $
   forever $ do
-    numbers <- replicateM 100 ((`mod` 100) <$> randomIO :: IO Int)
+    numbers <- runGenerator gen threadDelay
     WS.sendTextData conn (T.pack $ show numbers)
-    threadDelay 1000000
   where
     catchDisconnect :: SomeException -> IO ()
     catchDisconnect _ = liftIO $ modifyMVar_ state $ return . removeClient client
