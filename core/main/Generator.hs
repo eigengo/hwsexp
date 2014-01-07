@@ -35,9 +35,9 @@ module Generator(generator, Generator(..), GeneratorDelay) where
   --   
   --  Typically, you'd have code similar to
   --  @
-  --      case (runGenerator threadDelay) <$> (generator "evendistr 5 [1..2] every 50ms") of
-  --          Left err  -> ...         -- what do you want, a cookie?
-  --          Right gen -> gen >>= ... -- good user!
+  --      case (generator "evendistr 5 [1..2] every 50ms") of
+  --          Left err  -> ...                                  -- what do you want, a cookie?
+  --          Right gen -> runGenerator gen threadDelay >>= ... -- good user, have numbers
   -- @
   -- In GHCi, you can try out
   -- @
