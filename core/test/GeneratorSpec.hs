@@ -35,4 +35,5 @@ module GeneratorSpec(spec) where
       generate' expr = 
         let Right f = runGenerator <$> generator expr 
         in  f (const $ return ())
+        
       avg xs = sum xs `div` length xs
