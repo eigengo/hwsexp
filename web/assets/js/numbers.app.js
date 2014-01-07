@@ -11,18 +11,29 @@ angular.module('numbers.app', ['d3.directives', 'numbers.directives'])
 
     $scope.numbers = {};
     $scope.expression = "evendistr 25 [0..100] forever every 1000ms";
+    $scope.running = false;
 
-    var socket = createWebSocket('/'); 
-    socket.onopen = function() {
-       //socket.send("even 0-100 every 1s");
-    };
-    socket.onmessage = function(e) {
-       $scope.$apply(function() {
-         $scope.numbers = e.data;
-       });
+    var socket = null;
+    $scope.stop = function() {
+      if (socket != null) socket.close();
+      socket = null;
+      $scope.running = false;
     };
 
     $scope.executeExpression = function() {
-      socket.send($scope.expression);
+      if (socket != null) socket.close();
+      socket = createWebSocket("/");
+      socket.onopen = function(e) { 
+        socket.send($scope.expression);
+        $scope.running = true;
+      }
+      socket.onclose = function(e) { console.log(e); }
+      socket.onerror = function(e) { console.log(e); }
+      socket.onmessage = function(e) {
+        $scope.$apply(function() {
+          $scope.numbers = e.data;
+        });
+      };
     };
+
   }]);
