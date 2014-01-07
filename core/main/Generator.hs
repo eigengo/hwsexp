@@ -42,6 +42,9 @@ module Generator(generator, Generator(..), GeneratorDelay) where
   -- In GHCi, you can try out
   -- @
   --     let (Right nums) = (runGenerator) <$> generator ("evendistr 5 [1..2] every 50ms")
+  --     nums (const $ return ())
+  --     -- or, if you have import Control.Concurrent (threadDelay)
+  --     nums threadDelay
   -- @
   generator :: String                           -- ^The expression to parse
             -> Either String (Generator [Int])  -- ^The result with errors or the ready Generator
