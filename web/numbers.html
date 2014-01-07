@@ -21,10 +21,11 @@
 </head>
 <body>
 <div ng-app="numbers.app" ng-controller="NumbersCtrl">
-    <form ng-submit="executeExpression()">
-        <input type="text" ng-model="expression" size="50" placeholder="evendistr 25 [0..100] forever every 1000ms"/>
-        <input class="btn-primary" type="submit" value="Execute"/>
-    </form>
+    <div>
+        <input type="text" ng-model="expression" size="80" placeholder="evendistr 25 [0..100] forever every 1000ms"/>
+        <button ng-click="executeExpression()" class="btn-primary">Execute</button>
+        <button ng-click="stop()" ng-show="running" class="btn-danger">Stop</button>
+    </div>
     <tabs>
         <pane title="Raw">
             <h3>Raw data</h3>
