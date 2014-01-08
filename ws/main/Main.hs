@@ -51,14 +51,13 @@ application state pending = do
 
 
 -- |Performs the query on behalf of the client, cleaning up after itself when the client disconnects
-perform :: MVar ServerState -- ^ The server state
-        -> Client           -- ^ The client tuple (the query to perform and the connection for the responses)
-        -> Generator [Int]  -- ^ The value generator
-        -> IO ()            -- ^ The output
-perform state client@(query, conn) gen = handle catchDisconnect $
-  forever $ do
-    numbers <- runGenerator gen threadDelay
-    WS.sendTextData conn (T.pack $ show numbers)
+perform :: MVar ServerState   -- ^ The server state
+        -> Client             -- ^ The client tuple (the query to perform and the connection for the responses)
+        -> Generator [Int] () -- ^ The value generator
+        -> IO ()              -- ^ The output
+perform state client@(query, conn) gen = handle catchDisconnect $ do
+  runGenerator gen threadDelay (\numbers -> WS.sendTextData conn (T.pack $ show numbers))
+  WS.sendClose conn (T.pack "")
   where
     catchDisconnect :: SomeException -> IO ()
     catchDisconnect _ = liftIO $ modifyMVar_ state $ return . removeClient client
