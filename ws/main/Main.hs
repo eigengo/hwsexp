@@ -58,6 +58,7 @@ perform :: MVar ServerState   -- ^ The server state
 perform state client@(query, conn) gen = handle catchDisconnect $ do
   runGenerator gen threadDelay (\numbers -> WS.sendTextData conn (T.pack $ show numbers))
   WS.sendClose conn (T.pack "")
+  modifyMVar_ state $ return . removeClient client
   where
     catchDisconnect :: SomeException -> IO ()
     catchDisconnect _ = liftIO $ modifyMVar_ state $ return . removeClient client
