@@ -22,11 +22,14 @@ newtype Generator a b = Generator {
 }
 
 -- evendistr 10 [0..100] 
+-- evendistr 10 [0..100] once
 -- evendistr 10 [0..100] 5 times
 -- evendistr 10 [0..100] [0..5] times
 -- evendistr 10 [0..100] forever 
 -- evendistr 10 [0..100] ... every 1000ms
+-- evendistr 10 [0..100] ... every 1000ms
 -- evendistr 10 [0..100] ... every [1000..2000]ms
+-- evendistr [10..20] ...
 
 -- |Prepares a generator by parsing the input string. It returns a value that
 --  you can use to get the generated values.
@@ -54,12 +57,12 @@ generator input = do
       Times r -> do { t <- fromRange r; times t (mkGenerator exp del wait f) }
   }
   where
-    mkGenerator :: Generate -> Delay -> GeneratorDelay -> ([Int] -> IO b) -> IO b
+    mkGenerator :: Distribution -> Delay -> GeneratorDelay -> ([Int] -> IO b) -> IO b
     mkGenerator (EvenDistr countRange valueRange) (Fixed delayRange) wait !f = do
-      count <- fromRange countRange
-      delay <- fromRange delayRange
-      wait delay
+      count  <- fromRange countRange
+      delay  <- fromRange delayRange
       values <- replicateM count (fromRange valueRange)
+      wait delay
       f values
 
     times :: (Monad m) => Int -> m a -> m a
@@ -78,7 +81,7 @@ data Range =
   | Between Int Int deriving (Show)
 
 -- |Describes the different values we can generate
-data Generate = 
+data Distribution = 
   -- |Even distribution of a number of values 
   EvenDistr Range Range deriving (Show)
 
@@ -96,31 +99,33 @@ data Delay =
 
 -- |Generator expression combines the thing to generate, number of repetitions and
 --  the delay between repetitions
-data Expression = Expression Generate Repetition Delay deriving (Show)
+data Expression = Expression Distribution Repetition Delay deriving (Show)
 
 expression :: Parser Expression
 expression = do 
-  gen <- generate
+  dis <- distribution
   rep <- option defaultRepetition repetition
   del <- option defaultDelay delay
   C.endOfInput
-  return $ Expression gen rep del
+  return $ Expression dis rep del
   where 
     defaultRepetition = Forever
     defaultDelay = Fixed (Exact 1000000)
 
--- |Generate parses the thing to generate. ATM, we only have @evendistr count values@,
+-- |Distribution parses the thing to generate. ATM, we only have @evendistr count values@,
 --  where count is the number of repetitions and values are the numbers to generate
-generate :: Parser Generate
-generate = do
-  C.string "evendistr" 
-  C.skipSpace 
-  count <- range
-  C.skipSpace
-  rng <- range
-  return $ EvenDistr count rng
-  <?> "Generate"
-
+distribution :: Parser Distribution
+distribution = do
+  choice [even] <?> "Distribution"
+  where
+    even = do
+      C.string "evendistr" 
+      C.skipSpace 
+      count <- range
+      C.skipSpace
+      rng <- range
+      return $ EvenDistr count rng
+    
 -- |Parses the repetition statement; which is either
 --  * @forever@
 --  * @range@ "times"

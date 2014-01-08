@@ -15,11 +15,11 @@ module GeneratorSpec(spec) where
 
     describe "Even random expression" $ do
       it "Generates even distribution of values" $ do
-        avg <$> generate' "evendistr 1000 [0..100] once" >>= (`shouldSatisfy` (< 3) . abs . (50 -))
+        avg <$> generate' "evendistr 8000 [0..100] once" >>= (`shouldSatisfy` (< 3) . abs . (50 -))
 
     describe "Expression parsing" $ do
       it "Reports errors" $ do
-        error' "evendis" `shouldBe` "not enough bytes"
+        error' "evendis" `shouldBe` "Failed reading: empty"
         error' "evendistr 100" `shouldBe` "Failed reading: empty"
         error' "evendistr 100 foo" `shouldBe` "Failed reading: empty"
         error' "evendistr 100 100 theff" `shouldBe` "endOfInput"
