@@ -8,6 +8,7 @@ import qualified Text.Parsec.Expr as Ex
 import qualified Text.Parsec.Token as Tok
 
 import Lexer
+import Parser (contents)
 import Custom.Syntax
 
 number :: Parser Expr
@@ -64,13 +65,6 @@ defn :: Parser Expr
 defn = try extern
     <|> try function
     <|> expr
-
-contents :: Parser a -> Parser a
-contents p = do
-  Tok.whiteSpace lexer
-  r <- p
-  eof
-  return r
 
 toplevel :: Parser [Expr]
 toplevel = many $ do

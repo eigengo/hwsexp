@@ -10,8 +10,8 @@ spec = do
     it "Generates fixed count of fixed ranges" $ do
       generate' "{ evendistr 1 1 } once" `shouldReturn` [1]
       generate' "{ evendistr 1 1 } 1 times" `shouldReturn` [1] -- stupid to say 1 times, but hey ho.
-      generate' "{ evendistr 2 1 } once" `shouldReturn` [1, 1]
       generate' "{ evendistr [1..1] [1..1] } once" `shouldReturn` [1]
+      generate' "{ evendistr 2 1 } once" `shouldReturn` [1, 1]
 
   describe "Even random expression" $ do
     it "Generates even distribution of values" $ do

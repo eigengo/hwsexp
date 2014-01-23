@@ -3,9 +3,11 @@ module Standard.Parser(parseToplevel) where
 import Text.Parsec
 import Text.Parsec.String (Parser)
 
+import qualified Text.Parsec.Token as Tok
 import qualified Text.Parsec.Char as Ch
 
-import Parser (range)
+import Parser (range, contents)
+import Lexer
 import Standard.Syntax
 
 toplevel :: Parser Expr
@@ -16,5 +18,4 @@ toplevel = do
   return $ EvenDistr count values
 
 parseToplevel :: String -> Either ParseError Expr
-parseToplevel s = parse toplevel "<stdin>" s
-
+parseToplevel s = parse (contents toplevel) "<stdin>" s

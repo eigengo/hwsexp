@@ -69,7 +69,7 @@ generator input = do
     dummyGenerator (Fixed delayRange) wait !f = do
       delay  <- fromRange delayRange
       wait delay
-      f [1, 2, 3]
+      f [1]
 
     {--
     mkGenerator :: Distribution -> Delay -> GeneratorDelay -> ([Int] -> IO b) -> IO b

@@ -1,4 +1,4 @@
-module Parser(parseExpression, range) where
+module Parser(parseExpression, range, contents) where
 
 import Text.Parsec
 import Text.Parsec.String (Parser)
@@ -12,9 +12,8 @@ import Lexer
 import Syntax
 
 {--
-do { ; ; ; }  forever every ...
-evendistr ... forever every ...
-
+do { ; ; ; } forever every ...
+{ ... } forever every ...
 --}
 
 parseExpression :: String -> Either ParseError Expression
@@ -23,11 +22,12 @@ parseExpression s = parse (contents expression) "<stdin>" s
 block :: Parser String
 block = do
   Ch.string "{"
-  manyTill anyChar (try (string "}"))
+  manyTill anyChar (try (Ch.string "}"))
 
 expression :: Parser Expression
 expression = do
   dis <- custom <|> standard
+  Tok.whiteSpace lexer
   rep <- option defaultRepetition repetition
   del <- option defaultDelay delay
   return $ Expression dis rep del
@@ -71,6 +71,7 @@ repetition = do
 delay :: Parser Delay
 delay = do 
   Ch.string "every"
+  Tok.whiteSpace lexer
   val <- range
   Ch.string "ms"
   return $ Fixed (mult val 1000)
