@@ -44,7 +44,7 @@ application state pending = do
   clients <- liftIO $ readMVar state
   let client = (query, conn)
   case generator (T.unpack query) of
-    Left  msg -> WS.sendTextData conn (T.pack msg)
+    Left  err -> WS.sendTextData conn (T.pack $ show err)
     Right gen -> do { modifyMVar_ state $ return . addClient client
                     ; perform state client gen
                     }

@@ -3,10 +3,13 @@ module Generator(generator, Generator(..), GeneratorDelay) where
 
 import System.Random
 import Control.Monad
-import Data.Attoparsec 
 import Control.Applicative ((<$>))
-import qualified Data.Attoparsec.Char8 as C
-import qualified Data.ByteString.Char8 as B
+
+import Text.Parsec.Error
+import Syntax
+import qualified Parser as P
+import qualified Standard.Parser as SP
+import qualified Custom.Parser as CP
 
 -- |Function that delays the generator for the given number of microseconds.
 --  A suitable value is @threadDelay@
@@ -48,15 +51,27 @@ newtype Generator a b = Generator {
 --     nums threadDelay return
 -- @
 generator :: String                             -- ^The expression to parse
-          -> Either String (Generator [Int] b)  -- ^The result with errors or the ready Generator
+          -> Either ParseError (Generator [Int] b)  -- ^The result with errors or the ready Generator
 generator input = do
-  (Expression exp rep del) <- parseOnly expression (B.pack input)
+  (Expression exp rep del) <- P.parseExpression input
+  -- not yet used pe
+  pe <- case exp of
+          Standard body -> SP.parseToplevel body >> return ()
+          Custom body   -> CP.parseToplevel body >> return ()
+
   return $ Generator { runGenerator = \wait -> \f -> 
     case rep of
-      Forever -> forever (mkGenerator exp del wait f)
-      Times r -> do { t <- fromRange r; times t (mkGenerator exp del wait f) }
+      Forever -> forever (dummyGenerator del wait f)
+      Times r -> do { t <- fromRange r; times t (dummyGenerator del wait f) }
   }
   where
+    dummyGenerator :: Delay -> GeneratorDelay -> ([Int] -> IO b) -> IO b
+    dummyGenerator (Fixed delayRange) wait !f = do
+      delay  <- fromRange delayRange
+      wait delay
+      f [1, 2, 3]
+
+    {--
     mkGenerator :: Distribution -> Delay -> GeneratorDelay -> ([Int] -> IO b) -> IO b
     mkGenerator (EvenDistr countRange valueRange) (Fixed delayRange) wait !f = do
       count  <- fromRange countRange
@@ -64,6 +79,7 @@ generator input = do
       values <- replicateM count (fromRange valueRange)
       wait delay
       f values
+    --}
 
     times :: (Monad m) => Int -> m a -> m a
     times 1 m = m
@@ -72,116 +88,3 @@ generator input = do
     fromRange :: Range -> IO Int
     fromRange (Exact x) = return x
     fromRange (Between l u) = ((l +) . (`mod` (u - l)) <$> (randomIO :: IO Int))
-
--- |Range is either a single value or between some upper and lower limit
-data Range = 
-    -- |Exact value
-    Exact Int 
-    -- |Value between lower and upper limit; lower < upper.
-  | Between Int Int deriving (Show)
-
--- |Describes the different values we can generate
-data Distribution = 
-  -- |Even distribution of a number of values 
-  EvenDistr Range Range deriving (Show)
-
--- |The repetition rule
-data Repetition = 
-    -- |We repeat the generating step forever
-    Forever 
-    -- |We repeat specified number of times
-  | Times Range deriving (Show)
-
--- |The delay between steps
-data Delay =
-  -- |We wait a range of milliseconds
-  Fixed Range deriving (Show)
-
--- |Generator expression combines the thing to generate, number of repetitions and
---  the delay between repetitions
-data Expression = Expression Distribution Repetition Delay deriving (Show)
-
-expression :: Parser Expression
-expression = do 
-  dis <- distribution
-  rep <- option defaultRepetition repetition
-  del <- option defaultDelay delay
-  C.endOfInput
-  return $ Expression dis rep del
-  where 
-    defaultRepetition = Forever
-    defaultDelay = Fixed (Exact 1000000)
-
--- |Distribution parses the thing to generate. ATM, we only have @evendistr count values@,
---  where count is the number of repetitions and values are the numbers to generate
-distribution :: Parser Distribution
-distribution = do
-  choice [even] <?> "Distribution"
-  where
-    even = do
-      C.string "evendistr" 
-      C.skipSpace 
-      count <- range
-      C.skipSpace
-      rng <- range
-      return $ EvenDistr count rng
-    
--- |Parses the repetition statement; which is either
---  * @forever@
---  * @range@ "times"
---  * "once"
-repetition :: Parser Repetition
-repetition = do
-  choice [forever, times, once] <?> "Repetition"
-  where
-    forever = do
-      C.string "forever" 
-      C.skipSpace
-      return Forever
-    once = do
-      C.string "once"
-      C.skipSpace
-      return $ Times (Exact 1)
-    times = do
-      rep <- range
-      C.skipSpace
-      C.string "times"
-      C.skipSpace
-      return $ Times rep
-
--- |Parses the delay statement; at the moment, we only have fixed delay with
---  with "every" @range@
-delay :: Parser Delay
-delay = do 
-  C.string "every"
-  C.skipSpace
-  val <- range
-  C.string "ms"
-  C.skipSpace
-  return $ Fixed (mult val 1000)
-  <?> "Delay"
-  where
-    mult :: Range -> Int -> Range
-    mult (Exact x)     y = Exact   (x * y)
-    mult (Between l u) y = Between (l * y) (u * y)
-
--- |Range is "[" @decimal ".." @decimal@ "]" or @decimal@, for example
---  5 ~> Exact 5
---  [0..3] ~> Between 0 3
---  [1..0] ~> fail 
-range :: Parser Range
-range = 
-  choice [between, exact] <?> "Range"
-  where
-  between = do
-    C.char '['
-    lower <- C.decimal 
-    C.string ".."
-    upper <- C.decimal
-    C.char ']'
-    C.skipSpace
-    if (lower > upper) then fail "Range: lower > upper!" else return $ Between lower (upper + 1)
-  exact = do
-    val <- C.decimal
-    C.skipSpace
-    return $ Exact val

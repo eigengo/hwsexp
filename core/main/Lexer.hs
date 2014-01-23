@@ -2,6 +2,7 @@ module Lexer where
 
 import Text.Parsec.String (Parser)
 import Text.Parsec.Language (emptyDef)
+import Control.Applicative ((<$>))
 
 import qualified Text.Parsec.Token as Tok
 
@@ -18,6 +19,9 @@ lexer = Tok.makeTokenParser style
 
 integer :: Parser Integer
 integer = Tok.integer lexer
+
+int :: Parser Int
+int = fromInteger <$> Tok.integer lexer
 
 float :: Parser Double
 float = Tok.float lexer

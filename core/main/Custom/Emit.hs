@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Emit where
+module Custom.Emit where
 
 import LLVM.General.Module
 import LLVM.General.Context
