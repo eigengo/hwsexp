@@ -3,7 +3,6 @@ module Parser(parseExpression, range, contents) where
 import Text.Parsec
 import Text.Parsec.String (Parser)
 
-import qualified Text.Parsec.Token as Tok
 import qualified Text.Parsec.Char as Ch
 
 import Control.Applicative ((<$>))
@@ -27,7 +26,6 @@ block = do
 expression :: Parser Expression
 expression = do
   dis <- custom <|> standard
-  Tok.whiteSpace lexer
   rep <- option defaultRepetition repetition
   del <- option defaultDelay delay
   return $ Expression dis rep del
@@ -36,13 +34,14 @@ expression = do
     defaultDelay = Fixed (Exact 1000000)
     custom = do
       Ch.string "do"
+      whitespace
       Custom <$> block
     standard = Standard <$> block
 
 
 contents :: Parser a -> Parser a
 contents p = do
-  Tok.whiteSpace lexer
+  whitespace
   r <- p
   eof
   return r
@@ -53,7 +52,7 @@ contents p = do
 --  * "once"
 repetition :: Parser Repetition
 repetition = do
-  choice [forever, times, once] <?> "Repetition"
+  (try forever <|> try times <|> try once) <?> "Repetition"
   where
     forever = do
       Ch.string "forever" 
@@ -71,7 +70,6 @@ repetition = do
 delay :: Parser Delay
 delay = do 
   Ch.string "every"
-  Tok.whiteSpace lexer
   val <- range
   Ch.string "ms"
   return $ Fixed (mult val 1000)
@@ -87,7 +85,7 @@ delay = do
 --  [1..0] ~> fail 
 range :: Parser Range
 range = 
-  choice [between, exact] <?> "Range"
+  between <|> exact <?> "Range"
   where
   between = do
     Ch.char '['
