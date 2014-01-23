@@ -1,12 +1,20 @@
 module Standard.Parser(parseToplevel) where
 
 import Text.Parsec
+import Text.Parsec.String (Parser)
 
---import qualified Text.Parsec.Expr as Ex
---import qualified Text.Parsec.Token as Tok
+import qualified Text.Parsec.Char as Ch
 
---import Lexer
-import Custom.Syntax
+import Parser (range)
+import Standard.Syntax
+
+toplevel :: Parser Expr
+toplevel = do
+  Ch.string "evendistr"
+  count  <- range
+  values <- range
+  return $ EvenDistr count values
 
 parseToplevel :: String -> Either ParseError Expr
-parseToplevel = fail "Bantha poodoo"
+parseToplevel s = parse toplevel "<stdin>" s
+

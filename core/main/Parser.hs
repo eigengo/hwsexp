@@ -37,9 +37,7 @@ expression = do
     custom = do
       Ch.string "do"
       Custom <$> block
-    standard = do
-      Ch.string "evendistr"
-      Standard <$> block
+    standard = Standard <$> block
 
 
 contents :: Parser a -> Parser a
