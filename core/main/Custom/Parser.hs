@@ -5,7 +5,6 @@ import Text.Parsec.String (Parser)
 import Control.Applicative ((<$>))
 
 import qualified Text.Parsec.Expr as Ex
-import qualified Text.Parsec.Token as Tok
 
 import Lexer
 import Parser (contents)

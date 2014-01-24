@@ -55,7 +55,7 @@ generator :: String                             -- ^The expression to parse
 generator input = do
   (Expression exp rep del) <- P.parseExpression input
   -- not yet used pe
-  pe <- case exp of
+  _ <- case exp of
           Standard body -> SP.parseToplevel body >> return ()
           Custom body   -> CP.parseToplevel body >> return ()
 
