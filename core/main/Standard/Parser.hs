@@ -13,7 +13,9 @@ import Standard.Syntax
 toplevel :: Parser Expr
 toplevel = do
   Ch.string "evendistr"
+  whitespace
   count  <- range
+  whitespace
   values <- range
   return $ EvenDistr count values
 

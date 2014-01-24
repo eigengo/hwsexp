@@ -16,7 +16,7 @@ do { ; ; ; } forever every ...
 --}
 
 parseExpression :: String -> Either ParseError Expression
-parseExpression s = parse (contents expression) "<stdin>" s
+parseExpression = parse (contents expression) "<stdin>"
 
 block :: Parser String
 block = do
@@ -26,7 +26,9 @@ block = do
 expression :: Parser Expression
 expression = do
   dis <- custom <|> standard
+  whitespace
   rep <- option defaultRepetition repetition
+  whitespace
   del <- option defaultDelay delay
   return $ Expression dis rep del
   where 
@@ -52,7 +54,7 @@ contents p = do
 --  * "once"
 repetition :: Parser Repetition
 repetition = do
-  (try forever <|> try times <|> try once) <?> "Repetition"
+  forever <|> times <|> once <?> "Repetition"
   where
     forever = do
       Ch.string "forever" 
@@ -62,6 +64,7 @@ repetition = do
       return $ Times (Exact 1)
     times = do
       rep <- range
+      whitespace
       Ch.string "times"
       return $ Times rep
 
@@ -93,7 +96,7 @@ range =
     Ch.string ".."
     upper <- int
     Ch.char ']'
-    if (lower > upper) then fail "Range: lower > upper!" else return $ Between lower (upper + 1)
+    if (lower > upper) then fail "Range: lower > upper!" else return $ Between lower upper
   exact = do
     val <- int
     return $ Exact val
