@@ -10,7 +10,7 @@ angular.module('numbers.app', ['d3.directives', 'numbers.directives'])
     }
 
     $scope.numbers = {};
-    $scope.expression = "evendistr 25 [0..100] forever every 1000ms";
+    $scope.expression = "{evendistr 25 [0..100]} forever every 1000ms";
     $scope.running = false;
 
     var socket = null;
