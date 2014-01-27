@@ -54,7 +54,6 @@ generator :: String                             -- ^The expression to parse
           -> Either ParseError (Generator [Int] b)  -- ^The result with errors or the ready Generator
 generator input = do
   (Expression exp rep del) <- P.parseExpression input
-  -- not yet used pe
   gen <- case exp of
            Standard body -> SG.mkGenerator <$> SP.parseToplevel body 
            Custom body   -> CG.mkGenerator <$> CP.parseToplevel body
