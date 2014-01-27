@@ -5,7 +5,7 @@ import Text.Parsec.String (Parser)
 
 import qualified Text.Parsec.Char as Ch
 
-import Parser (range, contents)
+import ParserSupport (range, contents)
 import Lexer
 import Standard.Syntax
 

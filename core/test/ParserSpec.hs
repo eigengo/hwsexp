@@ -1,6 +1,7 @@
 module ParserSpec(spec) where
 
 import Text.Parsec
+import ParserSupport
 import Parser
 import Syntax
 import Test.Hspec

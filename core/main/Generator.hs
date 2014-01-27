@@ -1,19 +1,19 @@
 {-# LANGUAGE OverloadedStrings, BangPatterns #-}
 module Generator(generator, Generator(..), GeneratorDelay) where
 
-import System.Random
-import Control.Monad
+import Syntax
+import GeneratorSupport
+import Text.Parsec.Error
+
+import Control.Monad (forever)
 import Control.Applicative ((<$>))
 
-import Text.Parsec.Error
-import Syntax
 import qualified Parser as P
 import qualified Standard.Parser as SP
 import qualified Custom.Parser as CP
 
--- |Function that delays the generator for the given number of microseconds.
---  A suitable value is @threadDelay@
-type GeneratorDelay = Int -> IO ()
+import qualified Standard.Generator as SG
+import qualified Custom.Generator as CG
 
 -- |Generator is a type that performs a step of the generation process
 newtype Generator a b = Generator { 
@@ -55,36 +55,16 @@ generator :: String                             -- ^The expression to parse
 generator input = do
   (Expression exp rep del) <- P.parseExpression input
   -- not yet used pe
-  _ <- case exp of
-          Standard body -> SP.parseToplevel body >> return ()
-          Custom body   -> CP.parseToplevel body >> return ()
+  gen <- case exp of
+           Standard body -> SG.mkGenerator <$> SP.parseToplevel body 
+           Custom body   -> CG.mkGenerator <$> CP.parseToplevel body
 
   return $ Generator { runGenerator = \wait -> \f -> 
     case rep of
-      Forever -> forever (dummyGenerator del wait f)
-      Times r -> do { t <- fromRange r; times t (dummyGenerator del wait f) }
+      Forever -> forever (gen del wait f)
+      Times r -> do { t <- fromRange r; times t (gen del wait f) }
   }
   where
-    dummyGenerator :: Delay -> GeneratorDelay -> ([Int] -> IO b) -> IO b
-    dummyGenerator (Fixed delayRange) wait !f = do
-      delay  <- fromRange delayRange
-      wait delay
-      f [1]
-
-    {--
-    mkGenerator :: Distribution -> Delay -> GeneratorDelay -> ([Int] -> IO b) -> IO b
-    mkGenerator (EvenDistr countRange valueRange) (Fixed delayRange) wait !f = do
-      count  <- fromRange countRange
-      delay  <- fromRange delayRange
-      values <- replicateM count (fromRange valueRange)
-      wait delay
-      f values
-    --}
-
     times :: (Monad m) => Int -> m a -> m a
     times 1 m = m
     times x m = m >> times (x - 1) m
-
-    fromRange :: Range -> IO Int
-    fromRange (Exact x) = return x
-    fromRange (Between l u) = ((l +) . (`mod` (u - l)) <$> (randomIO :: IO Int))

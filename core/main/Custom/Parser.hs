@@ -7,7 +7,7 @@ import Control.Applicative ((<$>))
 import qualified Text.Parsec.Expr as Ex
 
 import Lexer
-import Parser (contents)
+import ParserSupport (contents)
 import Custom.Syntax
 
 number :: Parser Expr
