@@ -30,6 +30,14 @@ spec = do
       let Right (Expression _ forever _) = parseExpression "do { } forever"
       forever `shouldBe` Forever
 
+    it "Should parse delays" $ do
+      let Right (Expression _ _ (Fixed exact)) = parseExpression "do { } every 1000ms"
+      exact `shouldBe` (Exact 1000000)
+
+      let Right (Expression _ _ (Fixed oneToThree)) = parseExpression "do { } every [1..3]ms"
+      oneToThree `shouldBe` (Between 1000 3000)
+
+
   describe "Range parser" $ do
     it "Parses exact" $ do
       let Right one = parse range "<stdin>" "1"

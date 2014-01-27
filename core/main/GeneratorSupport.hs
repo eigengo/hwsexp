@@ -8,6 +8,7 @@ import Control.Applicative ((<$>))
 --  A suitable value is @threadDelay@
 type GeneratorDelay = Int -> IO ()
 
+-- |Picks one random value from the given range
 fromRange :: Range -> IO Int
 fromRange (Exact x) = return x
 fromRange (Between l u) = ((l +) . (`mod` (u + 1 - l)) <$> (randomIO :: IO Int))

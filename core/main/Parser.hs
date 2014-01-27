@@ -47,7 +47,7 @@ expression = do
 --  * "once"
 repetition :: Parser Repetition
 repetition = do
-  forever <|> times <|> once <?> "Repetition"
+  forever <|> times <|> once <?> "repetition"
   where
     forever = do
       Ch.string "forever" 
@@ -66,10 +66,11 @@ repetition = do
 delay :: Parser Delay
 delay = do 
   Ch.string "every"
+  whitespace
   val <- range
   Ch.string "ms"
   return $ Fixed (mult val 1000)
-  <?> "Delay"
+  <?> "delay"
   where
     mult :: Range -> Int -> Range
     mult (Exact x)     y = Exact   (x * y)

@@ -23,7 +23,7 @@ contents p = do
 --  [1..0] ~> fail 
 range :: Parser Range
 range = 
-  between <|> exact <?> "Range"
+  between <|> exact <?> "range (n; [m..n] | n > m)"
   where
   between = do
     Ch.char '['
@@ -31,7 +31,7 @@ range =
     Ch.string ".."
     upper <- int
     Ch.char ']'
-    if (lower > upper) then fail "Range: lower > upper!" else return $ Between lower upper
+    if (lower > upper) then fail "range: lower > upper!" else return $ Between lower upper
   exact = do
     val <- int
     return $ Exact val

@@ -18,6 +18,7 @@ toplevel = do
   values <- range
   whitespace
   return $ EvenDistr count values
+  <?> "distribution"
 
 parseToplevel :: String -> Either ParseError Expr
 parseToplevel s = parse (contents toplevel) "<stdin>" s
