@@ -16,8 +16,8 @@ import Control.Monad.Error
 import Control.Applicative
 import qualified Data.Map as Map
 
-import Codegen
-import qualified Syntax as S
+import Custom.Codegen
+import qualified Custom.Syntax as S
 
 toSig :: [String] -> [(AST.Type, AST.Name)]
 toSig = map (\x -> (double, AST.Name x))
