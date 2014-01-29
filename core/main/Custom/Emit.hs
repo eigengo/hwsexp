@@ -24,6 +24,9 @@ import qualified Data.Map as Map
 import Custom.Codegen
 import qualified Custom.Syntax as S
 
+mainName :: String
+mainName = "__main__"
+
 toSig :: [String] -> [(AST.Type, AST.Name)]
 toSig = map (\x -> (double, AST.Name x))
 
@@ -46,7 +49,7 @@ codegenTop (S.Extern name args) = do
   where fnargs = toSig args
 
 codegenTop exp = do
-  define double "start" [] blks
+  define double mainName [] blks
   where
     blks = createBlocks $ execCodegen $ do
       entry <- addBlock entryBlockName
@@ -116,15 +119,17 @@ jit c = withMCJIT c optlevel model ptrelim fastins
 codegen :: AST.Module -> [S.Expr] -> IO AST.Module
 codegen mod fns = withContext $ \context ->
   liftError $ withModuleFromAST context newast $ \m -> do
+    {--
     liftError $ withDefaultTargetMachine $ \target -> do
       liftError $ writeAssemblyToFile target "/Users/janmachacek/foo.S" m
       liftError $ writeObjectToFile target "/Users/janmachacek/foo.o" m
       llstr <- moduleString m
       putStrLn llstr
+    --}
 
     jit context $ \executionEngine -> do
       withModuleInEngine executionEngine m $ \em -> do
-        maybeFun <- getFunction em (AST.Name "main")
+        maybeFun <- getFunction em (AST.Name mainName)
         case maybeFun of
           Just fun -> do
             val <- run fun
