@@ -71,9 +71,6 @@ toplevel = many $ do
     def <- defn
     reservedOp ";"
     return def
-
---parseExpr :: String -> Either ParseError Expr
---parseExpr s = parse (contents expr) "<stdin>" s
-
+    
 parseToplevel :: String -> Either ParseError [Expr]
 parseToplevel s = parse (contents toplevel) "<stdin>" s

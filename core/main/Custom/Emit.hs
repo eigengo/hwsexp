@@ -5,22 +5,15 @@ module Custom.Emit where
 import LLVM.General.Module
 import LLVM.General.Context
 
-import LLVM.General.Target
 import LLVM.General.ExecutionEngine
 import Foreign.Ptr
-import Foreign.C.Types
 
 import qualified LLVM.General.AST as AST
 import qualified LLVM.General.AST.Constant as C
---import qualified LLVM.General.AST.Integer as I
---import qualified LLVM.General.AST.Float as F
---import qualified LLVM.General.AST.FloatingPointPredicate as FP
 import qualified LLVM.General.AST.IntegerPredicate as IP
 
-import Data.Word
 import Data.Int
 import Control.Monad.Error
-import Control.Applicative
 import qualified Data.Map as Map
 
 import Custom.Codegen
@@ -95,7 +88,8 @@ cgen (S.Constant n) = return $ cons $ C.Int 64 n
 cgen (S.Call fn args) = do
   largs <- mapM cgen args
   call (externf (AST.Name fn)) largs
-
+cgen (S.Extern _ _) = fail "Must not generate Extern"
+cgen (S.Function _ _ _) = fail "Must not generate Function"
 -------------------------------------------------------------------------------
 -- Compilation
 -------------------------------------------------------------------------------
@@ -104,7 +98,7 @@ liftError :: ErrorT String IO a -> IO a
 liftError = runErrorT >=> either fail return
 
 type MainFunction = IO Int64
-foreign import ccall "dynamic" 
+foreign import ccall unsafe "dynamic" 
   haskFun :: FunPtr MainFunction -> MainFunction
 
 run :: FunPtr a -> MainFunction
@@ -115,18 +109,19 @@ jit c = withMCJIT c optlevel model ptrelim fastins
   where
     optlevel = Just 2  -- optimization level
     model    = Nothing -- code model ( Default )
-    ptrelim  = Nothing -- frame pointer elimination
-    fastins  = Nothing -- fast instruction selection
+    ptrelim  = Just True -- frame pointer elimination
+    fastins  = Just True -- fast instruction selection
 
 codegen :: AST.Module -> [S.Expr] -> IO AST.Module
-codegen mod fns = withContext $ \context ->
+codegen mod fns = return newast
+    {--
+ withContext $ \context ->
   liftError $ withModuleFromAST context newast $ \m -> do
     liftError $ withDefaultTargetMachine $ \target -> do
       liftError $ writeAssemblyToFile target "/Users/janmachacek/foo.S" m
       liftError $ writeObjectToFile target "/Users/janmachacek/foo.o" m
       llstr <- moduleString m
       putStrLn llstr
-
     jit context $ \executionEngine -> do
       withModuleInEngine executionEngine m $ \em -> do
         maybeFun <- getFunction em (AST.Name mainName)
@@ -141,7 +136,17 @@ codegen mod fns = withContext $ \context ->
 
     --withDefaultTargetMachine $ \machine -> moduleAssembly machine m
     --astr  <- moduleAssembly 
-    return newast
+    --}
   where
     modn    = mapM codegenTop fns
     newast  = runLLVM mod modn
+
+coderun :: AST.Module -> IO Int64
+coderun mod = withContext $ \context ->
+  liftError $ withModuleFromAST context mod $ \m -> do 
+    jit context $ \executionEngine -> do
+      withModuleInEngine executionEngine m $ \em -> do
+        maybeFun <- getFunction em (AST.Name mainName)
+        case maybeFun of
+          Just fun -> run fun
+          Nothing -> return 0
