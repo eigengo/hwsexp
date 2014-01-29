@@ -5,6 +5,11 @@ module Custom.Emit where
 import LLVM.General.Module
 import LLVM.General.Context
 
+import LLVM.General.Target
+import LLVM.General.ExecutionEngine
+import Foreign.Ptr
+import Foreign.C.Types
+
 import qualified LLVM.General.AST as AST
 import qualified LLVM.General.AST.Constant as C
 import qualified LLVM.General.AST.Float as F
@@ -41,7 +46,7 @@ codegenTop (S.Extern name args) = do
   where fnargs = toSig args
 
 codegenTop exp = do
-  define double "main" [] blks
+  define double "start" [] blks
   where
     blks = createBlocks $ execCodegen $ do
       entry <- addBlock entryBlockName
@@ -93,11 +98,44 @@ cgen (S.Call fn args) = do
 liftError :: ErrorT String IO a -> IO a
 liftError = runErrorT >=> either fail return
 
+type StartFunction = IO Double
+foreign import ccall "dynamic" 
+  haskFun :: FunPtr StartFunction -> StartFunction
+
+run :: FunPtr a -> IO Double
+run fn = haskFun (castFunPtr fn :: FunPtr (IO Double))
+
+jit :: Context -> (MCJIT -> IO a) -> IO a
+jit c = withMCJIT c optlevel model ptrelim fastins
+  where
+    optlevel = Just 2  -- optimization level
+    model    = Nothing -- code model ( Default )
+    ptrelim  = Nothing -- frame pointer elimination
+    fastins  = Nothing -- fast instruction selection
+
 codegen :: AST.Module -> [S.Expr] -> IO AST.Module
 codegen mod fns = withContext $ \context ->
   liftError $ withModuleFromAST context newast $ \m -> do
-    llstr <- moduleString m
-    putStrLn llstr
+    liftError $ withDefaultTargetMachine $ \target -> do
+      liftError $ writeAssemblyToFile target "/Users/janmachacek/foo.S" m
+      liftError $ writeObjectToFile target "/Users/janmachacek/foo.o" m
+      llstr <- moduleString m
+      putStrLn llstr
+
+    jit context $ \executionEngine -> do
+      withModuleInEngine executionEngine m $ \em -> do
+        maybeFun <- getFunction em (AST.Name "main")
+        case maybeFun of
+          Just fun -> do
+            val <- run fun
+            putStrLn $ "******** :) " ++ (show val)
+          Nothing ->
+            putStrLn ":("
+
+        return ()
+
+    --withDefaultTargetMachine $ \machine -> moduleAssembly machine m
+    --astr  <- moduleAssembly 
     return newast
   where
     modn    = mapM codegenTop fns

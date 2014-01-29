@@ -1,4 +1,4 @@
-module GeneratorSupport(fromRange, GeneratorDelay, GeneratorFunction) where
+module GeneratorSupport(fromRange, GeneratorDelay, GeneratorCallback) where
 
 import Syntax
 import System.Random (randomIO)
@@ -8,8 +8,8 @@ import Control.Applicative ((<$>))
 --  A suitable value is @threadDelay@
 type GeneratorDelay = Int -> IO ()
 
--- |Function that can be applied to some callback to generate the values
-type GeneratorFunction a b = (([a] -> IO b) -> IO b)
+-- |Function that can be passed to the generator that is called in every step
+type GeneratorCallback a = [Int] -> IO a
 
 -- |Picks one random value from the given range
 fromRange :: Range -> IO Int

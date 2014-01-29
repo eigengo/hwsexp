@@ -8,12 +8,12 @@ error' expr =
   let Left err = generator expr
   in  show err
 
-generate' :: String -> IO [GeneratorValue]
+generate' :: String -> IO [Int]
 generate' expr = 
   let Right f = runGenerator <$> generator expr
   in  f (const $ return ()) return
 
-permgenGenerate' :: Permgen GeneratorValue [GeneratorValue] -> String -> IO (Permgen GeneratorValue [GeneratorValue], [GeneratorValue])
+permgenGenerate' :: Permgen [Int] -> String -> IO (Permgen [Int], [Int])
 permgenGenerate' permgen expr = 
   let Right (permgen', gen) = permgenGenerator permgen expr
   in  (runGenerator gen (const $ return ()) return) >>= (\nums -> return (permgen', nums))

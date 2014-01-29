@@ -6,7 +6,7 @@ import Custom.Emit
 import Custom.Syntax
 import GeneratorSupport
 
-mkGenerator :: [Expr] -> GeneratorFunction Int b
+mkGenerator :: [Expr] -> GeneratorCallback a -> IO a
 mkGenerator expr f = do
-  _ <- codegen (emptyModule "jit") expr
+  mod <- codegen (emptyModule "jit") expr
   f []
