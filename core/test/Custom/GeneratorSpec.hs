@@ -9,11 +9,11 @@ spec :: Spec
 spec = do
   describe "Do expression" $ do
     it "Generates fixed count of ranges" $ do
-      generate' "do { def foo(a b) a * b + 3; foo(1, 3); } once" `shouldReturn` [1]
+      generate' "do { def foo(a b) a * b + 3; foo(1, 2); } once" `shouldReturn` [1]
 
   describe "Permgen generator" $ do
     it "Makes use of the permgen space" $ do
-      let expr = "do { def foo(a b) a * b + 3; foo(1, 3); } once"
+      let expr = "do { def foo(a b) a * b; foo(1, 1); } once"
       (permgen1, values1) <- permgenGenerate' newPermgen expr
       (permgen2, values2) <- permgenGenerate' permgen1 expr
 

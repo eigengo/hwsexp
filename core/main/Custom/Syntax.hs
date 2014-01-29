@@ -3,7 +3,7 @@ module Custom.Syntax where
 type Name = String
 
 data Expr
-  = Float Double
+  = Constant Integer
   | Var String
   | Call Name [Expr]
   | Function Name [Name] Expr

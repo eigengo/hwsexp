@@ -19,7 +19,7 @@ import qualified LLVM.General.AST as AST
 import qualified LLVM.General.AST.Constant as C
 import qualified LLVM.General.AST.Attribute as A
 import qualified LLVM.General.AST.CallingConvention as CC
-import qualified LLVM.General.AST.FloatingPointPredicate as FP
+import qualified LLVM.General.AST.IntegerPredicate as IP
 
 -------------------------------------------------------------------------------
 -- Module Level
@@ -61,9 +61,8 @@ external retty label argtys body = addDefn $
 -- Types
 -------------------------------------------------------------------------------
 
--- IEEE 754 double
-double :: Type
-double = FloatingPointType 64 IEEE
+int64 :: Type
+int64 = IntegerType 64
 
 -------------------------------------------------------------------------------
 -- Names
@@ -225,6 +224,22 @@ externf :: Name -> Operand
 externf = ConstantOperand . C.GlobalReference
 
 -- Arithmetic and Constants
+iadd :: Operand -> Operand -> Codegen Operand
+iadd a b = instr $ Add False False a b []
+
+isub :: Operand -> Operand -> Codegen Operand
+isub a b = instr $ Sub False False a b []
+
+imul :: Operand -> Operand -> Codegen Operand
+imul a b = instr $ Mul True True a b []
+
+idiv :: Operand -> Operand -> Codegen Operand
+idiv a b = instr $ SDiv False a b []
+
+icmp :: IP.IntegerPredicate -> Operand -> Operand -> Codegen Operand
+icmp cond a b = instr $ ICmp cond a b []
+
+{--
 fadd :: Operand -> Operand -> Codegen Operand
 fadd a b = instr $ FAdd a b []
 
@@ -239,12 +254,14 @@ fdiv a b = instr $ FDiv a b []
 
 fcmp :: FP.FloatingPointPredicate -> Operand -> Operand -> Codegen Operand
 fcmp cond a b = instr $ FCmp cond a b []
-
+--}
 cons :: C.Constant -> Operand
 cons = ConstantOperand
 
+{--
 uitofp :: Type -> Operand -> Codegen Operand
 uitofp ty a = instr $ UIToFP a ty []
+--}
 
 toArgs :: [Operand] -> [(Operand, [A.ParameterAttribute])]
 toArgs = map (\x -> (x, []))
