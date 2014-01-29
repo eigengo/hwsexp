@@ -13,10 +13,12 @@ import Custom.Syntax
 number :: Parser Expr
 number = do
   n <- integer
-  return $ Float (fromInteger n)
+  return $ Constant n
 
-floating :: Parser Expr
-floating = Float <$> float
+{--
+int64 :: Parser Expr
+int64 = Float <$> float
+--}
 
 binary s assoc = Ex.Infix (reservedOp s >> return (BinaryOp s)) assoc
 
@@ -54,8 +56,7 @@ call = do
   return $ Call name args
 
 factor :: Parser Expr
-factor = try floating
-      <|> try number
+factor =  try number
       <|> try call
       <|> try variable
       <|> (parens expr)
@@ -70,9 +71,6 @@ toplevel = many $ do
     def <- defn
     reservedOp ";"
     return def
-
---parseExpr :: String -> Either ParseError Expr
---parseExpr s = parse (contents expr) "<stdin>" s
-
+    
 parseToplevel :: String -> Either ParseError [Expr]
 parseToplevel s = parse (contents toplevel) "<stdin>" s

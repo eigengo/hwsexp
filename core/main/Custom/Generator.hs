@@ -1,8 +1,13 @@
 module Custom.Generator(mkGenerator) where
 
+import Prelude hiding (lookup)
+import Custom.Codegen
+import Custom.Emit
 import Custom.Syntax
-import Syntax
 import GeneratorSupport
 
-mkGenerator :: [Expr] -> Delay -> GeneratorDelay -> ([Int] -> IO b) -> IO b
-mkGenerator _ _ _ _ = fail "Bantha poodoo!"
+mkGenerator :: [Expr] -> GeneratorCallback a -> IO a
+mkGenerator expr f = do
+  mod <- codegen (emptyModule "jit") expr
+  val <- coderun mod
+  f [fromIntegral val]

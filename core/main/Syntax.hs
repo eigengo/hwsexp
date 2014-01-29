@@ -12,7 +12,7 @@ data Distribution =
     -- |Even distribution of a number of values 
     Standard String 
     -- |Custom generator of values
-  | Custom String deriving (Show, Eq)
+  | Custom String deriving (Show, Eq, Ord)
 
 -- |The repetition rule
 data Repetition = 
