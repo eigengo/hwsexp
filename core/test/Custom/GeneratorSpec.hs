@@ -15,7 +15,7 @@ spec = do
     it "Makes use of the permgen space" $ do
       let expr = "do { def foo(a b) a * b; foo(1, 1); } once"
       (permgen1, values1) <- permgenGenerate' newPermgen expr
-      (_, values2) <- permgenGenerate' permgen1 expr
+      (permgen2, values2) <- permgenGenerate' permgen1 expr
 
-      print (M.keys permgen1)
+      (M.keys permgen1) `shouldBe` (M.keys permgen2)
       values1 `shouldBe` values2
