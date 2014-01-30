@@ -4,6 +4,7 @@ module Custom.Emit(codegen, run) where
 
 import LLVM.General.Module
 import LLVM.General.Context
+import LLVM.General.Target
 
 import LLVM.General.ExecutionEngine
 import Foreign.Ptr
@@ -117,9 +118,9 @@ codegen mod fns = return newast
   {--
   withContext $ \context ->
     liftError $ withModuleFromAST context newast $ \m -> do
-      withDefaultTargetMachine $ \target -> do
-        writeAssemblyToFile target "/Users/janmachacek/foo.S" m
-        writeObjectToFile target "/Users/janmachacek/foo.o" m
+      liftError $ withDefaultTargetMachine $ \target -> do
+        liftError $ writeAssemblyToFile target "/Users/janmachacek/foo.S" m
+        liftError $ writeObjectToFile target "/Users/janmachacek/foo.o" m
         llstr <- moduleString m
         putStrLn llstr
         return newast
