@@ -9,5 +9,5 @@ import GeneratorSupport
 mkGenerator :: [Expr] -> GeneratorCallback a -> IO a
 mkGenerator expr f = do
   mod <- codegen (emptyModule "jit") expr
-  val <- coderun mod
+  val <- run mod
   f [fromIntegral val]

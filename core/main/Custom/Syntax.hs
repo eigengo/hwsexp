@@ -1,4 +1,4 @@
-module Custom.Syntax where
+module Custom.Syntax(Name, Expr(..)) where
 
 type Name = String
 

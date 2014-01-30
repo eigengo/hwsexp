@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Custom.Emit where
+module Custom.Emit(codegen, run) where
 
 import LLVM.General.Module
 import LLVM.General.Context
@@ -20,7 +20,7 @@ import Custom.Codegen
 import qualified Custom.Syntax as S
 
 mainName :: String
-mainName = "__main__"
+mainName = "main"
 
 toSig :: [String] -> [(AST.Type, AST.Name)]
 toSig = map (\x -> (int64, AST.Name x))
@@ -99,10 +99,10 @@ liftError = runErrorT >=> either fail return
 
 type MainFunction = IO Int64
 foreign import ccall unsafe "dynamic" 
-  haskFun :: FunPtr MainFunction -> MainFunction
+  jitFun :: FunPtr MainFunction -> MainFunction
 
-run :: FunPtr a -> MainFunction
-run fn = haskFun (castFunPtr fn :: FunPtr MainFunction)
+runJitFun :: FunPtr a -> MainFunction
+runJitFun fn = jitFun (castFunPtr fn :: FunPtr MainFunction)
 
 jit :: Context -> (MCJIT -> IO a) -> IO a
 jit c = withMCJIT c optlevel model ptrelim fastins
@@ -114,39 +114,26 @@ jit c = withMCJIT c optlevel model ptrelim fastins
 
 codegen :: AST.Module -> [S.Expr] -> IO AST.Module
 codegen mod fns = return newast
-    {--
- withContext $ \context ->
-  liftError $ withModuleFromAST context newast $ \m -> do
-    liftError $ withDefaultTargetMachine $ \target -> do
-      liftError $ writeAssemblyToFile target "/Users/janmachacek/foo.S" m
-      liftError $ writeObjectToFile target "/Users/janmachacek/foo.o" m
-      llstr <- moduleString m
-      putStrLn llstr
-    jit context $ \executionEngine -> do
-      withModuleInEngine executionEngine m $ \em -> do
-        maybeFun <- getFunction em (AST.Name mainName)
-        case maybeFun of
-          Just fun -> do
-            val <- run fun
-            putStrLn $ "******** :) " ++ (show val)
-          Nothing ->
-            putStrLn ":("
-
-        return ()
-
-    --withDefaultTargetMachine $ \machine -> moduleAssembly machine m
-    --astr  <- moduleAssembly 
-    --}
+  {--
+  withContext $ \context ->
+    liftError $ withModuleFromAST context newast $ \m -> do
+      withDefaultTargetMachine $ \target -> do
+        writeAssemblyToFile target "/Users/janmachacek/foo.S" m
+        writeObjectToFile target "/Users/janmachacek/foo.o" m
+        llstr <- moduleString m
+        putStrLn llstr
+        return newast
+  --}
   where
     modn    = mapM codegenTop fns
     newast  = runLLVM mod modn
 
-coderun :: AST.Module -> IO Int64
-coderun mod = withContext $ \context ->
+run :: AST.Module -> IO Int64
+run mod = withContext $ \context ->
   liftError $ withModuleFromAST context mod $ \m -> do 
     jit context $ \executionEngine -> do
       withModuleInEngine executionEngine m $ \em -> do
         maybeFun <- getFunction em (AST.Name mainName)
         case maybeFun of
-          Just fun -> run fun
+          Just fun -> runJitFun fun
           Nothing -> return 0
