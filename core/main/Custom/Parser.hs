@@ -15,11 +15,6 @@ number = do
   n <- integer
   return $ Constant n
 
-{--
-int64 :: Parser Expr
-int64 = Float <$> float
---}
-
 binary s assoc = Ex.Infix (reservedOp s >> return (BinaryOp s)) assoc
 
 binops = [[binary "*" Ex.AssocLeft,
