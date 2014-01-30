@@ -53,7 +53,7 @@ permgenGenerator :: Permgen a
                  -> Either ParseError (Permgen a, Generator a)
 permgenGenerator permgen input = do
   (Expression exp rep del) <- P.parseExpression input
-  gen <- newGenerator exp
+  gen <- newGeneratorCore exp
   {--
   case M.lookup exp permgen of
     Just genF -> return $ (permgen, buildGenerator genF rep del)
@@ -62,14 +62,14 @@ permgenGenerator permgen input = do
                     ; return $ (permgen', buildGenerator gen rep del)
                     }
   --}
-  return $ (permgen, buildGenerator gen rep del)
+  return $ (permgen, newGenerator gen rep del)
   where
-    newGenerator :: Distribution -> Either ParseError (GeneratorCallback a -> IO a)
-    newGenerator (Standard body) = SG.mkGenerator <$> SP.parseToplevel body 
-    newGenerator (Custom body)   = CG.mkGenerator <$> CP.parseToplevel body
+    newGeneratorCore :: Distribution -> Either ParseError (GeneratorCallback a -> IO a)
+    newGeneratorCore (Standard body) = SG.mkGenerator <$> SP.parseToplevel body 
+    newGeneratorCore (Custom body)   = CG.mkGenerator <$> CP.parseToplevel body
 
-    buildGenerator :: (GeneratorCallback a -> IO a) -> Repetition -> Delay -> Generator a
-    buildGenerator gen rep del = Generator { runGenerator = \sleep -> \f -> 
+    newGenerator :: (GeneratorCallback a -> IO a) -> Repetition -> Delay -> Generator a
+    newGenerator gen rep del = Generator { runGenerator = \sleep -> \f -> 
       case rep of
         Forever -> forever (delayed del sleep (gen f))
         Times r -> do { t <- fromRange r; times t (delayed del sleep (gen f)) }
