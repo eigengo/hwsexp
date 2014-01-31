@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings, BangPatterns #-}
-module Generator(generator, permgenGenerator, newPermgen, Generator(..), GeneratorDelay, Permgen) where
+module Generator(generator, Generator(..), GeneratorDelay) where
 
 import Syntax
 import GeneratorSupport
@@ -14,11 +14,6 @@ import qualified Custom.Parser as CP
 import qualified Standard.Generator as SG
 import qualified Custom.Generator as CG
 
-import qualified Data.Map as M
-
--- |Permgen space holding the prepared generators given the generating expression
-type Permgen a = M.Map Distribution (IO a)
-
 -- |Generator is a type that performs a step of the generation process
 newtype Generator b = Generator { 
 
@@ -27,10 +22,6 @@ newtype Generator b = Generator {
                -> ([Int] -> IO b)       -- ^The operation to execute in every step
                -> IO b                  -- ^The final result
 }
-
--- |Perpares new permgen space for the caching generator
-newPermgen :: Permgen a
-newPermgen = M.empty
 
 -- |Prepares a generator by parsing the input string. It returns a generator that
 --  you can use to get the values.
@@ -43,33 +34,17 @@ newPermgen = M.empty
 -- @
 generator :: String                                          -- ^The expression to parse
           -> Either ParseError (Generator a)  -- ^The result with errors or the ready Generator
-generator input = permgenGenerator newPermgen input >>= return . snd
-  
--- |Prepares a generator by looking up existing generator in @permgen@; if not found, it proceeds to parse the
---  input string and attempting to build a new generator. It returns a new permgen and a generator that
---  you can use to get the values. 
-permgenGenerator :: Permgen a
-                 -> String
-                 -> Either ParseError (Permgen a, Generator a)
-permgenGenerator permgen input = do
+generator input = do
   (Expression exp rep del) <- P.parseExpression input
-  gen <- newGenerator exp
-  {--
-  case M.lookup exp permgen of
-    Just genF -> return $ (permgen, buildGenerator genF rep del)
-    Nothing   -> do { gen <- newGenerator exp
-                    ; let permgen' = M.insert exp gen permgen
-                    ; return $ (permgen', buildGenerator gen rep del)
-                    }
-  --}
-  return $ (permgen, buildGenerator gen rep del)
+  gen <- newGeneratorCore exp
+  return $ newGenerator gen rep del
   where
-    newGenerator :: Distribution -> Either ParseError (GeneratorCallback a -> IO a)
-    newGenerator (Standard body) = SG.mkGenerator <$> SP.parseToplevel body 
-    newGenerator (Custom body)   = CG.mkGenerator <$> CP.parseToplevel body
+    newGeneratorCore :: Distribution -> Either ParseError (GeneratorCallback a -> IO a)
+    newGeneratorCore (Standard body) = SG.mkGenerator <$> SP.parseToplevel body 
+    newGeneratorCore (Custom body)   = CG.mkGenerator <$> CP.parseToplevel body
 
-    buildGenerator :: (GeneratorCallback a -> IO a) -> Repetition -> Delay -> Generator a
-    buildGenerator gen rep del = Generator { runGenerator = \sleep -> \f -> 
+    newGenerator :: (GeneratorCallback a -> IO a) -> Repetition -> Delay -> Generator a
+    newGenerator gen rep del = Generator { runGenerator = \sleep -> \f -> 
       case rep of
         Forever -> forever (delayed del sleep (gen f))
         Times r -> do { t <- fromRange r; times t (delayed del sleep (gen f)) }
@@ -83,4 +58,4 @@ permgenGenerator permgen input = do
     delayed (Fixed delayRange) sleep !m = do
       delay <- fromRange delayRange
       sleep delay
-      m
+      m  
