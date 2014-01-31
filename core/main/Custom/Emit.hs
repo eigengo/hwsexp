@@ -4,7 +4,6 @@ module Custom.Emit(codegen, run) where
 
 import LLVM.General.Module
 import LLVM.General.Context
-import LLVM.General.Target
 
 import LLVM.General.ExecutionEngine
 import Foreign.Ptr
@@ -98,12 +97,17 @@ cgen (S.Function _ _ _) = fail "Must not generate Function"
 liftError :: ErrorT String IO a -> IO a
 liftError = runErrorT >=> either fail return
 
-type MainFunction = IO Int64
-foreign import ccall unsafe "dynamic" 
-  jitFun :: FunPtr MainFunction -> MainFunction
+type MainFunctionS = IO Int64
+type MainFunctionM = IO (Ptr Int64)
 
-runJitFun :: FunPtr a -> MainFunction
-runJitFun fn = jitFun (castFunPtr fn :: FunPtr MainFunction)
+foreign import ccall unsafe "dynamic" singleJitFun :: FunPtr MainFunctionS -> MainFunctionS
+foreign import ccall unsafe "dynamic" multipleJitFun :: FunPtr MainFunctionM -> MainFunctionM
+
+runSingleJitFun :: FunPtr a -> MainFunctionS
+runSingleJitFun fn = singleJitFun (castFunPtr fn :: FunPtr MainFunctionS)
+
+runMultipleJitFun :: FunPtr a -> MainFunctionM
+runMultipleJitFun fn = multipleJitFun (castFunPtr fn :: FunPtr MainFunctionM)
 
 jit :: Context -> (MCJIT -> IO a) -> IO a
 jit c = withMCJIT c optlevel model ptrelim fastins
@@ -115,16 +119,6 @@ jit c = withMCJIT c optlevel model ptrelim fastins
 
 codegen :: AST.Module -> [S.Expr] -> IO AST.Module
 codegen mod fns = return newast
-  {--
-  withContext $ \context ->
-    liftError $ withModuleFromAST context newast $ \m -> do
-      liftError $ withDefaultTargetMachine $ \target -> do
-        liftError $ writeAssemblyToFile target "/Users/janmachacek/foo.S" m
-        liftError $ writeObjectToFile target "/Users/janmachacek/foo.o" m
-        llstr <- moduleString m
-        putStrLn llstr
-        return newast
-  --}
   where
     modn    = mapM codegenTop fns
     newast  = runLLVM mod modn
@@ -136,5 +130,5 @@ run mod = withContext $ \context ->
       withModuleInEngine executionEngine m $ \em -> do
         maybeFun <- getFunction em (AST.Name mainName)
         case maybeFun of
-          Just fun -> runJitFun fun
+          Just fun -> runSingleJitFun fun
           Nothing -> return 0
