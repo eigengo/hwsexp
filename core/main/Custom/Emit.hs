@@ -4,6 +4,7 @@ module Custom.Emit(codegen, run) where
 
 import LLVM.General.Module
 import LLVM.General.Context
+import LLVM.General.Target
 
 import LLVM.General.ExecutionEngine
 import Foreign.Ptr
@@ -118,7 +119,15 @@ jit c = withMCJIT c optlevel model ptrelim fastins
     fastins  = Just True -- fast instruction selection
 
 codegen :: AST.Module -> [S.Expr] -> IO AST.Module
-codegen mod fns = return newast
+codegen mod fns = 
+  withContext $ \context ->
+    liftError $ withModuleFromAST context newast $ \m -> do
+      liftError $ withDefaultTargetMachine $ \target -> do
+        llstr <- moduleString m
+        liftError $ writeAssemblyToFile target "/Users/janmachacek/foo.S" m
+        liftError $ writeObjectToFile target "/Users/janmachacek/foo.o" m
+        writeFile "/Users/janmachacek/foo.l" llstr
+        return newast
   where
     modn    = mapM codegenTop fns
     newast  = runLLVM mod modn
